@@ -5,16 +5,18 @@ import java.util.ArrayList;
 public class BigInt implements Comparable{
     // The first index is the units , the second dozens and so on...
     ArrayList<Integer> _number;
-    boolean _is_plus;
+    boolean _is_positive;
 
     public BigInt(String number) throws IllegalArgumentException {
         if (!_valid_number(number)) {
             throw new IllegalArgumentException("Invalid number");
         }
 
+        // Check if the first digit is '-'
         char first_digit = number.charAt(0);
-        _is_plus = (first_digit != '-');
+        _is_positive = (first_digit != '-');
 
+        // Save only the digits of the number
         String only_digits = number;
         if (first_digit == '-' || first_digit == '+') {
             only_digits = number.substring(1);
@@ -26,32 +28,42 @@ public class BigInt implements Comparable{
         }
 
         _remove_leading_zores();
-
-        if (_number.get(0) == 0) {
-            _is_plus = true;
-        }
     }
 
     private BigInt(ArrayList<Integer> number, boolean is_plus) {
         _number = number;
-        _is_plus = is_plus;
+        _is_positive = is_plus;
 
         _remove_leading_zores();
-
-        if (_number.get(0) == 0) {
-            _is_plus = true;
-        }
     }
 
     private boolean _valid_number(String number) {
+        // Validate the first character is a sign or digit
         char first_digit = number.charAt(0);
         boolean is_first_digit_valid = first_digit == '+' || first_digit == '-' || Character.isDigit(first_digit);
 
         return is_first_digit_valid && number.substring(1).chars().allMatch(Character::isDigit);
     }
 
+    private void _remove_leading_zores() {
+        // Iterate the number until that appears a number greater than 0
+        for (int i = _number.size() - 1; i >= 0; --i) {
+            if (_number.get(i) == 0) {
+                _number.remove(i);
+            } else {
+                break;
+            }
+        }
+
+        // If the list is empty so the number is zero
+        if (_number.isEmpty()) {
+            _number.add(0);
+            _is_positive = true;
+        }
+    }
+
     private int _get_digit(int index) {
-        return index < _number.size() ? _number.get(index) : 0;
+        return _get_digit(_number, index);
     }
 
     private static int _get_digit(ArrayList<Integer> num, int index) {
@@ -63,6 +75,7 @@ public class BigInt implements Comparable{
 
         for (i = index + 1; i < num.size(); ++i) {
             if (num.get(i) != 0) {
+                // A number we can borrow from
                 num.set(i, num.get(i) - 1);
                 break;
             }
@@ -70,30 +83,18 @@ public class BigInt implements Comparable{
 
         --i;
         while (i > index) {
+            // Set to 9 because all that digits borrowing to the digit after them
             num.set(i, 9);
             --i;
         }
     }
 
-    private void _remove_leading_zores() {
-        for (int i = _number.size() - 1; i >= 0; --i) {
-            if (_number.get(i) == 0) {
-                _number.remove(i);
-            } else {
-                break;
-            }
-        }
-
-        if (_number.isEmpty()) {
-            _number.add(0);
-            _is_plus = true;
-        }
-    }
-
     private boolean _is_greater(BigInt rhs) {
         if (_number.size() > rhs._number.size()) {
+            // The number is longer than the other so is bigger
             return true;
         } else if (_number.size() < rhs._number.size()) {
+            // The number is shorter than the other so is smaller
             return false;
         }
 
@@ -109,17 +110,17 @@ public class BigInt implements Comparable{
     }
 
     private void _swap_sign() {
-        _is_plus = !_is_plus;
+        _is_positive = !_is_positive;
     }
 
     public BigInt plus(BigInt rhs) {
-        if (_is_plus && !rhs._is_plus) {
-            // x-y
+        if (_is_positive && !rhs._is_positive) {
+            // x+(-y)=x-y
             return minus(new BigInt(rhs._number, true));
-        } else if (!_is_plus && rhs._is_plus) {
+        } else if (!_is_positive && rhs._is_positive) {
             // -x+y=y-x
             return rhs.minus(new BigInt(_number, true));
-        } else if (!_is_plus && !rhs._is_plus) {
+        } else if (!_is_positive && !rhs._is_positive) {
             // -x-y=-(x+y)
             BigInt num1 = new BigInt(_number, true);
             BigInt num2 = new BigInt(rhs._number, true);
@@ -136,12 +137,14 @@ public class BigInt implements Comparable{
         int digit_sum = 0;
         ArrayList<Integer> sum = new ArrayList<Integer>();
         for (int i = 0; i < length; ++i) {
+            // Calculate the digits sum including the carry from the last sum
             digit_sum += _get_digit(i) + rhs._get_digit(i);
 
             sum.add(digit_sum % 10);
             digit_sum = Math.floorDiv(digit_sum, 10);
         }
 
+        // We got a carry at the end so we need to add another '1' digit
         if (0 != digit_sum) {
             sum.add(1);
         }
@@ -150,7 +153,7 @@ public class BigInt implements Comparable{
     }
 
     public BigInt minus(BigInt rhs) {
-        if (!_is_plus && rhs._is_plus) {
+        if (!_is_positive && rhs._is_positive) {
             // -x-y=-(x+y)
             BigInt num1 = new BigInt(_number, true);
             BigInt num2 = new BigInt(rhs._number, true);
@@ -159,10 +162,10 @@ public class BigInt implements Comparable{
             result._swap_sign();
 
             return result;
-        } else if (_is_plus && !rhs._is_plus) {
+        } else if (_is_positive && !rhs._is_positive) {
             // x-(-y)=x+y
             return plus(new BigInt(rhs._number, true));
-        } else if (!_is_plus && !rhs._is_plus) {
+        } else if (!_is_positive && !rhs._is_positive) {
             // -x-(-y)=y-x
             BigInt num1 = new BigInt(_number, true);
             BigInt num2 = new BigInt(rhs._number, true);
@@ -173,15 +176,16 @@ public class BigInt implements Comparable{
         // x-y
         int length = Math.max(_number.size(), rhs._number.size());
 
+        // Set the bigger and the smaller number
         ArrayList<Integer> bigger, smaller;
         boolean is_plus;
         if (_is_greater(rhs)) {
-            bigger = (ArrayList<Integer>)_number.clone();
-            smaller = (ArrayList<Integer>)rhs._number.clone();
+            bigger = new ArrayList<Integer>(_number);
+            smaller = new ArrayList<Integer>(rhs._number);
             is_plus = true;
         } else {
-            bigger = (ArrayList<Integer>)rhs._number.clone();
-            smaller = (ArrayList<Integer>)_number.clone();
+            bigger = new ArrayList<Integer>(rhs._number);
+            smaller = new ArrayList<Integer>(_number);
             is_plus = false;
         }
 
@@ -191,8 +195,10 @@ public class BigInt implements Comparable{
             int subtracting_current_digit = _get_digit(bigger, i);
             int subtracted_current_digit = _get_digit(smaller, i);
 
+            // subtract the digits
             digit_diff = subtracting_current_digit - subtracted_current_digit;
             if (0 > digit_diff) {
+                // The subtracted is bigger so we need to borrow
                 _borrow(bigger, i);
                 digit_diff += 10;
             }
@@ -204,31 +210,32 @@ public class BigInt implements Comparable{
     }
 
     public BigInt multiply(BigInt rhs) {
-        boolean is_plus = _is_plus == rhs._is_plus;
-
-        BigInt product = new BigInt("0");
+        BigInt product = new BigInt(new ArrayList<Integer>(), true);
         ArrayList<Integer> digit_product = new ArrayList<>();
         for (int i = 0; i < _number.size(); ++i) {
+            // Add zero's to the digit product
             for (int j = 0; j < i; ++j) {
                 digit_product.add(0);
             }
 
-            int carry = 0;
+            // calculate the digit product
+            int prod = 0;
             for (int j = 0; j < rhs._number.size(); ++j) {
-                int prod = (_number.get(i) * rhs._number.get(j)) + carry;
+                prod += (_number.get(i) * rhs._number.get(j));
                 digit_product.add(prod % 10);
-                carry = Math.floorDiv(prod, 10);
+                prod = Math.floorDiv(prod, 10);
             }
 
-            if (carry != 0) {
-                digit_product.add(carry);
+            if (prod != 0) {
+                digit_product.add(prod);
             }
 
+            // Sum the digit product to the number product
             product = product.plus(new BigInt(digit_product, true));
             digit_product.clear();
         }
 
-        product._is_plus = is_plus;
+        product._is_positive = (_is_positive == rhs._is_positive);
 
         return product;
     }
@@ -239,17 +246,20 @@ public class BigInt implements Comparable{
             throw new ArithmeticException("Zero division");
         }
 
-        boolean is_plus = _is_plus == rhs._is_plus;
+        BigInt abs_divider = new BigInt(_number, true);
 
-        BigInt quotient = new BigInt("0");
+        BigInt quotient = new BigInt(new ArrayList<Integer>(), true);
         BigInt orig_divisor = new BigInt(rhs._number, true);
         BigInt divisor = new BigInt(rhs._number, true);
-        while (0 >= divisor.compareTo(this)) {
+        // Run until the divisor is bigger or equal to the divider
+        while (0 >= divisor.compareTo(abs_divider)) {
+            // Increase the quotient by 1
             quotient = quotient.plus(new BigInt("1"));
+            // Increase the divisor
             divisor = divisor.plus(orig_divisor);
         }
 
-        quotient._is_plus = is_plus;
+        quotient._is_positive = (_is_positive == rhs._is_positive);
 
         return quotient;
     }
@@ -257,11 +267,13 @@ public class BigInt implements Comparable{
     @Override
     public String toString() {
         String num = new String();
-        if (!_is_plus)
+        if (!_is_positive)
         {
+            // Add '-' if the number is negative
             num = num.concat("-");
         }
 
+        // Add all the digits in reverse order
         for (int i = _number.size() - 1; i >= 0; --i)
         {
             num = num.concat(_number.get(i).toString());
@@ -283,8 +295,15 @@ public class BigInt implements Comparable{
         }
 
         BigInt num = (BigInt)other;
+        BigInt diff = this.minus(num);
 
-        return this.minus(num)._number.get(0) == 0;
+        // If the difference has more than one digit it not 0
+        if (diff._number.size() > 1) {
+            return false;
+        }
+
+        // Return if this - other == 0
+        return diff._number.get(0) == 0;
     }
 
     @Override
@@ -301,10 +320,14 @@ public class BigInt implements Comparable{
 
         BigInt num = (BigInt)other;
 
-        if (equals(num)) {
+        // Calculate number difference
+        BigInt diff = minus(num);
+
+        // If the difference is 0 the numbers are equals
+        if (diff._number.size() == 1 && diff._number.get(0) == 0) {
             return 0;
         }
 
-        return minus(num)._is_plus ? 1 : -1;
+        return diff._is_positive ? 1 : -1;
     }
 }
