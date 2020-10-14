@@ -1,42 +1,49 @@
 package com.moti;
 
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
-        BigInt num1 = get_number_from_user();
-        BigInt num2 = get_number_from_user();
-
-        System.out.printf("%s + %s = %s\n", num1, num2, num1.plus(num2));
-        System.out.printf("%s - %s = %s\n", num1, num2, num1.minus(num2));
-        System.out.printf("%s * %s = %s\n", num1, num2, num1.multiply(num2));
+        BigInt num1 = getNumberFromUser();
+        BigInt num2 = getNumberFromUser();
 
         try {
-            System.out.printf("%s / %s = %s\n", num1, num2, num1.divide(num2));
-        } catch (ArithmeticException e) {
+            // Print number relations
+            System.out.printf("%s + %s = %s\n", num1, num2, num1.plus(num2));
+            System.out.printf("%s - %s = %s\n", num1, num2, num1.minus(num2));
+            System.out.printf("%s * %s = %s\n", num1, num2, num1.multiply(num2));
+
+            try {
+                System.out.printf("%s / %s = %s\n", num1, num2, num1.divide(num2));
+            } catch (ArithmeticException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } catch (BorrowException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
-    private static BigInt get_number_from_user() {
+    private static BigInt getNumberFromUser() {
         Scanner stdin = new Scanner(System.in);
-        BigInt big_num = new BigInt("0");
+        BigInt bigNum = new BigInt("0");
 
-        boolean is_number_invalid = false;
+        boolean isNumberInvalid = false;
+        // Get the number from the user until he entered valid number
         do {
+            // Get string number from user
             System.out.print("Enter number: ");
             String num = stdin.nextLine();
             try {
-                big_num = new BigInt(num);
-                is_number_invalid = false;
+                // Try to initialize the big integer
+                bigNum = new BigInt(num);
+                isNumberInvalid = false;
             } catch (IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
-                is_number_invalid = true;
+                isNumberInvalid = true;
             }
-        } while(is_number_invalid);
+        } while(isNumberInvalid);
 
-        return big_num;
+        return bigNum;
     }
 }
