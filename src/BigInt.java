@@ -1,5 +1,3 @@
-package com.moti;
-
 import java.util.ArrayList;
 
 /**
