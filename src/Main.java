@@ -3,10 +3,10 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        BigInt num1 = getNumberFromUser();
-        BigInt num2 = getNumberFromUser();
-
         try {
+            BigInt num1 = getNumberFromUser();
+            BigInt num2 = getNumberFromUser();
+
             // Print number relations
             System.out.printf("%s + %s = %s\n", num1, num2, num1.plus(num2));
             System.out.printf("%s - %s = %s\n", num1, num2, num1.minus(num2));
@@ -17,12 +17,12 @@ public class Main {
             } catch (ArithmeticException e) {
                 System.out.println("Error: " + e.getMessage());
             }
-        } catch (BorrowException e) {
+        } catch (BigIntException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
-    private static BigInt getNumberFromUser() {
+    private static BigInt getNumberFromUser() throws BigIntException {
         Scanner stdin = new Scanner(System.in);
         BigInt bigNum = new BigInt("0");
 
@@ -36,7 +36,7 @@ public class Main {
                 // Try to initialize the big integer
                 bigNum = new BigInt(num);
                 isNumberInvalid = false;
-            } catch (IllegalArgumentException e) {
+            } catch (BigIntException e) {
                 System.out.println("Error: " + e.getMessage());
                 isNumberInvalid = true;
             }

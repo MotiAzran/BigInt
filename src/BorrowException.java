@@ -3,7 +3,7 @@ import java.util.ArrayList;
 /**
  * Borrowing exception class
  */
-public class BorrowException extends Exception {
+public class BorrowException extends BigIntException {
     /**
      * Initialize BorrowException
      * @param num the number the exception happened on
