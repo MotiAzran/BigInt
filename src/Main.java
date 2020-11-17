@@ -8,6 +8,8 @@ public class Main {
             BigInt num2 = getNumberFromUser();
 
             // Print number relations
+            System.out.printf("%s = %s? %s\n", num1, num2, num1.equals(num2) ? "True" : "False");
+            System.out.printf("%s > %s? %s\n", num1, num2, num1.compareTo(num2) > 0 ? "True" : "False");
             System.out.printf("%s + %s = %s\n", num1, num2, num1.plus(num2));
             System.out.printf("%s - %s = %s\n", num1, num2, num1.minus(num2));
             System.out.printf("%s * %s = %s\n", num1, num2, num1.multiply(num2));
@@ -36,7 +38,7 @@ public class Main {
                 // Try to initialize the big integer
                 bigNum = new BigInt(num);
                 isNumberInvalid = false;
-            } catch (BigIntException e) {
+            } catch (IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
                 isNumberInvalid = true;
             }

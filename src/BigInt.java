@@ -11,12 +11,12 @@ public class BigInt implements Comparable<BigInt> {
     /**
      * Initialize the integer
      * @param number big integer string representation
-     * @throws BigIntException if the string is not represent a number the exception throws
+     * @throws IllegalArgumentException if the string is not represent a number the exception throws
      */
-    public BigInt(String number) throws BigIntException {
+    public BigInt(String number) throws IllegalArgumentException {
         if (!isValidNumber(number)) {
             // The string does not represent a number
-            throw new BigIntException("Invalid number");
+            throw new IllegalArgumentException("Invalid number");
         }
 
         isPositive = isPositiveNumber(number);
@@ -84,7 +84,7 @@ public class BigInt implements Comparable<BigInt> {
             return false;
         }
 
-        return (number.substring(firstDigitIndex).matches("[0-9]+"));
+        return (number.substring(firstDigitIndex).chars().allMatch(Character::isDigit));
     }
 
     private boolean isPositiveNumber(String number) {
@@ -94,6 +94,7 @@ public class BigInt implements Comparable<BigInt> {
             if (number.charAt(i) == '-') {
                 isPositive = !isPositive;
             } else if (number.charAt(i) != '+') {
+                // No more signs
                 break;
             }
         }
@@ -107,13 +108,8 @@ public class BigInt implements Comparable<BigInt> {
      */
     private void removeLeadingZeroes() {
         // Iterate the number until that appears a number greater than 0
-        for (int i = number.size() - 1; i >= 0; --i) {
-            if (number.get(i) == 0) {
-                // Remove leading zero
-                number.remove(i);
-            } else {
-                break;
-            }
+        while (number.size() > 0 && number.get(number.size() - 1) == 0) {
+            number.remove(number.size() - 1);
         }
 
         // If the list is empty so the number is zero
@@ -179,19 +175,28 @@ public class BigInt implements Comparable<BigInt> {
      * @return true if this is greater than rhs, else false
      */
     private boolean isGreater(BigInt rhs) {
-        if (number.size() > rhs.number.size()) {
-            // The number is longer than the other so is bigger
+        if (isPositive && !rhs.isPositive) {
+            // rhs is negative and this is positive
             return true;
-        } else if (number.size() < rhs.number.size()) {
-            // The number is shorter than the other so is smaller
+        } else if (!isPositive && rhs.isPositive) {
+            // rhs is positive and this is negative
             return false;
+        }
+        // The numbers have the same sign
+
+        if (number.size() > rhs.number.size()) {
+            // This is longer than the other, so this is bigger if it positive
+            return isPositive;
+        } else if (number.size() < rhs.number.size()) {
+            // This is shorter than the other, so the other is bigger if this positive
+            return !isPositive;
         }
 
         for (int i = number.size() - 1; i >= 0; --i) {
             if (number.get(i) > rhs.number.get(i)) {
-                return true;
+                return isPositive;
             } else if (number.get(i) < rhs.number.get(i)) {
-                return false;
+                return !isPositive;
             }
         }
 
@@ -369,6 +374,10 @@ public class BigInt implements Comparable<BigInt> {
      * @throws BorrowException if the borrowing failed the exception is thrown
      */
     public BigInt divide(BigInt rhs) throws ArithmeticException, BigIntException {
+        if (null == rhs) {
+            throw new BigIntException("null parameter");
+        }
+
         if (rhs.equals(new BigInt("0"))) {
             // The rhs is 0
             throw new ArithmeticException("Zero division");
